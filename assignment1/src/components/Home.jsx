@@ -1,4 +1,6 @@
 import MediaRow from './MediaRow';
+import SingleView from './SingleView';
+import {useState} from 'react';
 
 const mediaArray = [
   {
@@ -36,11 +38,17 @@ const mediaArray = [
     created_at: '2024-01-07T20:48:13.000Z',
   },
 ];
-
+// TODO: 
+// Add a button for each file in the MediaRow component
+// that calls the setSelectedItem function with the corresponding media item as a parameter.
+// Use the setSelectedItem function to update the selectedItem state variable in the MediaRow component.
+// Use the selectedItem state variable to conditionally render the SingleView component in the Home component.
 const Home = () => {
+  const [selectedItem, setSelectedItem] = useState(null);
   return (
     <>
       <h2>My Media</h2>
+      {selectedItem && <SingleView item={selectedItem} setSelectedItem={setSelectedItem} />}
       <table>
         <thead>
           <tr>
@@ -53,8 +61,9 @@ const Home = () => {
           </tr>
         </thead>
         <tbody>
+        
         {mediaArray.map((item) => (
-            <MediaRow key={item.media_id} item={item} />
+            <MediaRow key={item.media_id} item={item} selectedItem={selectedItem} setSelectedItem={setSelectedItem} />
         ))}
         </tbody>
       </table>
