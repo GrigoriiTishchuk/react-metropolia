@@ -11,7 +11,7 @@ const Single = () => {
     return (
       <div className="single-view">
         <h2>No media selected</h2>
-        <button onClick={() => navigate(-1)}>← Go Back</button>
+        <button onClick={() => navigate(-1)}>Go Back</button>
       </div>
     );
   }
