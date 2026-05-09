@@ -1,7 +1,7 @@
 import MediaRow from '../components/MediaRow';
 import SingleView from './Single';
-import { useState, useEffect  } from 'react';
-import { fetchData } from '../utils/fetchData';
+import { useState } from 'react';
+import { useMedia } from '../hooks/apiHooks';
 const mediaArray = [
   {
     media_id: 8,
@@ -41,51 +41,7 @@ const mediaArray = [
 
 const Home = () => {
   const [selectedItem, setSelectedItem] = useState(null);
-  const [mediaArray, setMediaArray] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-  const getMedia = async () => {
-    try {
-      setLoading(true);
-      // Fetch media items from Media API
-      const mediaUrl = `${import.meta.env.VITE_MEDIA_API}/media`;
-      const mediaItems = await fetchData(mediaUrl);
-      // Fetch username for each media item from Auth API
-      const mediaWithUsers = await Promise.all(
-        mediaItems.map(async (item) => {
-          try {
-            // Fetch user data by user_id
-            const userUrl = `${import.meta.env.VITE_AUTH_API}/users/${item.user_id}`;
-            const userData = await fetchData(userUrl);
-            // Combine media item with username
-            return {
-              ...item,
-              username: userData?.username || 'Unknown',
-            };
-          } catch (userErr) {
-            console.warn(`Failed to fetch user ${item.user_id}:`, userErr);
-            // Return item with fallback username
-            return {
-              ...item,
-              username: 'Unknown',
-            };
-          }
-        })
-      );
-      setMediaArray(mediaWithUsers);
-      setError(null);
-    } catch (err) {
-      console.error('Failed to fetch media:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  getMedia();
-}, []);
+  const { mediaArray, loading, error, refetch } = useMedia();
 
   if (loading) {
     return <div className="loading">Loading media...</div>;
