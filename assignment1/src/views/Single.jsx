@@ -23,11 +23,13 @@ const Single = () => {
   return (
     <div className="single-view">
       <button className="close-btn" onClick={handleClose} aria-label="Close">
-        ← Back
+        Back
       </button>
       
       <h2>{item.title}</h2>
-      
+      <p className="owner">
+        <strong>Owner:</strong> {item.username || 'Unknown'} (ID: {item.user_id})
+      </p>
       {/* Conditional rendering: image vs video */}
       {item.media_type?.startsWith('image') ? (
         <img 
