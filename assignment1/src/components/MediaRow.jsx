@@ -14,6 +14,11 @@ const MediaRow = ({ item }) => {
       </td>
       <td>{item.title}</td>
       <td>{item.description || '-'}</td>
+       <td>
+        <span className="username" title={`User ID: ${item.user_id}`}>
+          {item.username || 'Loading...'}
+        </span>
+      </td>
       <td>{new Date(item.created_at).toLocaleString('fi-FI')}</td>
       <td>{(item.filesize / 1024).toFixed(1)} KB</td>
       <td>{item.media_type}</td>
@@ -36,6 +41,8 @@ MediaRow.propTypes = {
     media_id: PropTypes.number.isRequired,
     thumbnail: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
+    user_id: PropTypes.number.isRequired,
+    username: PropTypes.string,
     description: PropTypes.string,
     created_at: PropTypes.string.isRequired,
     filesize: PropTypes.number,
