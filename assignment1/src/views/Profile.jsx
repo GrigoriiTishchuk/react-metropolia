@@ -19,7 +19,6 @@ useEffect(() => {
       }
       setLoading(true);
       const userData = await getUserByToken(token);
-      console.log('User data loaded:', userData);
       setUser(userData);
       
     } catch (err) {

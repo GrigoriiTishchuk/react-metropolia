@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { fetchData } from '../utils/fetchData';
 
 export const useMedia = () => {
@@ -100,7 +100,7 @@ export const useUser = () => {
     return await response.json();
   };
 
-  const getUserByToken = async (token) => {
+  const getUserByToken = useCallback(async (token) => {
     if (!token || typeof token !== 'string') {
       throw new Error('Token is required');
     }
@@ -110,12 +110,6 @@ export const useUser = () => {
     const headers = {
       'Authorization': `Bearer ${cleanToken}`,
     };
-    console.log('Request:', {
-      url: apiUrl,
-      method: 'GET',
-      authHeader: headers.Authorization.substring(0, 25) + '...',
-    });
-
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers,
@@ -144,7 +138,7 @@ export const useUser = () => {
     const data = JSON.parse(responseText);
     return data.user;
     
-  };
+  }, []);
 
   return { postUser, getUserByToken };
 };
