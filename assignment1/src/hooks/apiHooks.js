@@ -38,6 +38,49 @@ export const useMedia = () => {
     }
   };
 
+  const postMedia = async (mediaData, token) => {
+    const mediaUrl = `${import.meta.env.VITE_MEDIA_API}/media`;
+    const payload = {
+      filename: mediaData.filename,
+      title: mediaData.title,
+      description: mediaData.description || '',
+      filesize: mediaData.filesize,
+      media_type: mediaData.media_type,
+      user_id: mediaData.user_id,
+      thumbnail: mediaData.thumbnail,
+    };
+    
+    const fetchOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token?.trim()}`,
+      },
+      body: JSON.stringify(payload),
+    };
+    
+    console.log('Registering media:', payload.title);
+    const response = await fetch(mediaUrl, fetchOptions);
+    const responseText = await response.text();
+    
+    if (!response.ok) {
+      console.error('Media API error:', {
+        status: response.status,
+        body: responseText,
+      });
+      
+      let errorMsg = `Media registration failed: ${response.status}`;
+      try {
+        const errorData = JSON.parse(responseText);
+        if (errorData?.message) errorMsg = errorData.message;
+      } catch {}
+      
+      throw new Error(errorMsg);
+    }
+    const mediaResult = JSON.parse(responseText);
+    console.log('Media registered:', mediaResult);
+    return mediaResult;
+  };
   // fetch on mount
   useEffect(() => {
     fetchMedia();
@@ -47,8 +90,68 @@ export const useMedia = () => {
     loading,
     error,
     refetch: fetchMedia, // allow manual refresh
+    postMedia,
   };
 };
+
+export const useFile = () => {
+  const postFile = async (file, token) => {
+    if (!file || !(file instanceof File)) {
+      throw new Error('Invalid file provided');
+    }
+    const uploadUrl = `${import.meta.env.VITE_UPLOAD_SERVER}/upload`;
+    const formData = new FormData();
+    formData.append('file', file); 
+    const fetchOptions = {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token?.trim()}`,
+      },
+      body: formData,
+    };
+    console.log('Uploading to:', uploadUrl);
+    console.log('File:', file.name, `(${(file.size / 1024).toFixed(1)} KB)`);
+    const response = await fetch(uploadUrl, fetchOptions);
+    const responseText = await response.text();
+    
+    if (!response.ok) {
+      console.error('Upload API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: responseText,
+      });
+      // Try to parse error message from API
+      let errorMsg = `Upload failed: ${response.status}`;
+      try {
+        const errorData = JSON.parse(responseText);
+        if (errorData?.message) errorMsg = errorData.message;
+      } catch {
+        if (responseText.trim()) errorMsg = responseText.trim();
+      }
+      throw new Error(errorMsg);
+    }
+    const result = JSON.parse(responseText);
+    if (!result?.data) {
+      throw new Error('Invalid response format from upload API');
+    }
+    
+    const fileData = result.data;
+    console.log('File uploaded successfully:', {
+      filename: fileData.filename,
+      media_type: fileData.media_type,
+      filesize: fileData.filesize,
+    });
+    // Return file metadata
+    return {
+      filename: fileData.filename,
+      media_type: fileData.media_type,
+      filesize: fileData.filesize,
+    };
+  };
+  
+  return { postFile };
+};
+
 
 export const useAuthentication = () => {
   const postLogin = async (credentials) => {
@@ -75,6 +178,7 @@ export const useAuthentication = () => {
 
   return { postLogin };
 };
+
 
 //Custom hook for user operations
 export const useUser = () => {
