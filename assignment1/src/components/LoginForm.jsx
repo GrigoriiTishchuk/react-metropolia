@@ -1,4 +1,3 @@
-// src/components/LoginForm.jsx
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import useForm from '../hooks/formHooks';

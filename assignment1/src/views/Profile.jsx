@@ -9,29 +9,38 @@ const Profile = () => {
   const { getUserByToken } = useUser();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          navigate('/login');
-          return;
-        }
-        const userData = await getUserByToken(token);
-        setUser(userData);
-      } catch (err) {
-        console.error('Failed to fetch profile:', err);
-        setError(err.message);
-        // Token invalid → logout
+useEffect(() => {
+  const fetchProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+      setLoading(true);
+      const userData = await getUserByToken(token);
+      console.log('User data loaded:', userData);
+      setUser(userData);
+      
+    } catch (err) {
+      console.error('Failed to fetch profile:', err);
+      // Handle auth errors
+      if (err.message?.includes('401') || err.message?.includes('Unauthorized')) {
         localStorage.removeItem('token');
         navigate('/login');
-      } finally {
-        setLoading(false);
+        return;
       }
-    };
-    
-    fetchProfile();
-  }, [getUserByToken, navigate]);
+      // Handle 400 errors
+      if (err.message?.includes('400')) {
+        console.warn('Bad request - token may be malformed');
+      }
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchProfile();
+}, [getUserByToken, navigate]);
 
   if (loading) return <div className="loading"> Loading profile...</div>;
   if (error) return <div className="error"> {error}</div>;
