@@ -1,19 +1,15 @@
-// src/views/Logout.jsx
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useUserContext } from '../hooks/contextHooks';
 
 const Logout = () => {
-  const navigate = useNavigate();
+  const { handleLogout } = useUserContext();
   useEffect(() => {
-    // Clear auth data
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/', { replace: true });
-  }, [navigate]);
+    handleLogout();
+  }, [handleLogout]);
 
   return (
     <div className="auth-container">
-      <p>Logging out...</p>
+      <p>Logged out...</p>
     </div>
   );
 };
