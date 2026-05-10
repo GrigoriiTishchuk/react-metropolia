@@ -15,6 +15,11 @@ const Layout = () => {
             <li>
               <Link to="/upload" className="nav-link">Upload</Link>
             </li>
+            {localStorage.getItem('token') ? (
+              <li><Link to="/logout" className="nav-link">Logout</Link></li>
+            ) : (
+              <li><Link to="/login" className="nav-link">Login</Link></li>
+            )}
           </ul>
         </nav>
       </header>
@@ -23,7 +28,6 @@ const Layout = () => {
         {/*Child routes render here */}
         <Outlet />
       </main>
-      
       <footer className="app-footer">
         <small>© 2026 Media App</small>
       </footer>
