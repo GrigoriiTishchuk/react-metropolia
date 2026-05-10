@@ -1,41 +1,30 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import useForm from '../hooks/formHooks';
-import { useAuthentication } from '../hooks/apiHooks';
+import { useUserContext } from '../hooks/contextHooks'; 
 
-const LoginForm = ({ onSwitch, onSuccess }) => {
+const LoginForm = ({ onSwitch }) => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  // Get auth function from custom hook
-  const { postLogin } = useAuthentication();
-  const initValues = {
-    username: '',
-    password: '',
-  };
-  // Submit handler: called by useForm when form submits
+  // Get login function from context
+  const { handleLogin } = useUserContext();
+  const initValues = { username: '', password: '' };
+
   const doLogin = async (formData) => {
     try {
       setLoading(true);
       setError(null);
-      // Call API via custom hook
-      const result = await postLogin(formData);
-      // Save token to localStorage
-      if (result?.token) {
-        localStorage.setItem('token', result.token);
-        localStorage.setItem('user', JSON.stringify(result.user || {}));
-      }
-      // Notify parent to redirect
-      onSuccess?.(result);
+      //Call context's handleLogin
+      await handleLogin(formData);
       
     } catch (err) {
-      console.error('Login failed:', err);
+      console.error('Login error:', err);
       setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Initialize form hook
   const { inputs, handleInputChange, handleSubmit } = useForm(doLogin, initValues);
 
   return (
@@ -90,7 +79,6 @@ const LoginForm = ({ onSwitch, onSuccess }) => {
 
 LoginForm.propTypes = {
   onSwitch: PropTypes.func.isRequired,
-  onSuccess: PropTypes.func,
 };
 
 export default LoginForm;

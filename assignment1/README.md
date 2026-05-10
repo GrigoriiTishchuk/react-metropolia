@@ -28,3 +28,6 @@ Open [link text here](https://users.metropolia.fi/~grigorit/custom-hooks/) to vi
 
 # TASK 6
 Open [link text here](https://users.metropolia.fi/~grigorit/forms/) to view it in the browser.
+
+# TASK 7
+Open [link text here](https://users.metropolia.fi/~grigorit/context/) to view it in the browser.
