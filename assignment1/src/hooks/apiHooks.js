@@ -1,5 +1,4 @@
-// src/hooks/apiHooks.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { fetchData } from '../utils/fetchData';
 
 export const useMedia = () => {
@@ -7,7 +6,6 @@ export const useMedia = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ✅ Fetch logic (moved from Home.jsx)
   const fetchMedia = async () => {
     try {
       setLoading(true);
@@ -48,6 +46,99 @@ export const useMedia = () => {
     mediaArray,
     loading,
     error,
-    refetch: fetchMedia, // Optional: allow manual refresh
+    refetch: fetchMedia, // allow manual refresh
   };
+};
+
+export const useAuthentication = () => {
+  const postLogin = async (credentials) => {
+    const fetchOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(credentials),
+    };
+    
+    const response = await fetch(
+      `${import.meta.env.VITE_AUTH_API}/auth/login`, 
+      fetchOptions
+    );
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Login failed: ${response.status}`);
+    }
+    
+    return await response.json();
+  };
+
+  return { postLogin };
+};
+
+//Custom hook for user operations
+export const useUser = () => {
+  const postUser = async (userData) => {
+    const fetchOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    };
+    
+    const response = await fetch(
+      `${import.meta.env.VITE_AUTH_API}/users`, 
+      fetchOptions
+    );
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Registration failed: ${response.status}`);
+    }
+    
+    return await response.json();
+  };
+
+  const getUserByToken = useCallback(async (token) => {
+    if (!token || typeof token !== 'string') {
+      throw new Error('Token is required');
+    }
+    const cleanToken = token.trim();
+    const apiUrl = `${import.meta.env.VITE_AUTH_API}/users/token`;
+    //Headers:Authorization for GET 
+    const headers = {
+      'Authorization': `Bearer ${cleanToken}`,
+    };
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers,
+    });
+    const responseText = await response.text();
+    
+    if (!response.ok) {
+      console.error('API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: responseText,
+      });
+      // Try to extract error message
+      let errorMsg = `Failed to fetch user: ${response.status}`;
+      try {
+        const errorData = JSON.parse(responseText);
+        if (errorData?.message) errorMsg = errorData.message;
+      } catch {
+        if (responseText.trim()) errorMsg = responseText.trim();
+      }
+      
+      throw new Error(errorMsg);
+    }
+    
+    // Parse successful response
+    const data = JSON.parse(responseText);
+    return data.user;
+    
+  }, []);
+
+  return { postUser, getUserByToken };
 };

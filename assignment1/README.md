@@ -25,3 +25,6 @@ Open [link text here](https://users.metropolia.fi/~grigorit/hooks/) to view it i
 
 # Task 5
 Open [link text here](https://users.metropolia.fi/~grigorit/custom-hooks/) to view it in the browser.
+
+# TASK 6
+Open [link text here](https://users.metropolia.fi/~grigorit/forms/) to view it in the browser.
