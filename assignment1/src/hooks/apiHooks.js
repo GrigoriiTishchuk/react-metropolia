@@ -6,7 +6,7 @@ export const useMedia = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchMedia = async () => {
+  const fetchMedia = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -29,14 +29,14 @@ export const useMedia = () => {
           }
         })
       );
-      setMediaArray(mediaWithUsers);
+      setMediaArray(mediaWithUsers || []);
     } catch (err) {
       console.error('Failed to fetch media:', err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const postMedia = async (mediaData, token) => {
     const mediaUrl = `${import.meta.env.VITE_MEDIA_API}/media`;
@@ -81,6 +81,132 @@ export const useMedia = () => {
     console.log('Media registered:', mediaResult);
     return mediaResult;
   };
+
+  const deleteMedia = async (mediaId, token) => {
+    if (!mediaId || typeof mediaId !== 'number' || mediaId < 1) {
+      throw new Error('Valid media ID is required');
+    }
+    if (!token || typeof token !== 'string') {
+      throw new Error('Authentication token is required');
+    }
+
+    const url = `${import.meta.env.VITE_MEDIA_API}/media/${mediaId}`;
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token.trim()}`,
+      },
+    });
+
+    const responseText = await response.text();
+    if (!response.ok) {
+      console.error('Delete API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: responseText,
+      });
+      let errorMsg = `Failed to delete media: ${response.status}`;
+      let errorCode = null;
+      
+      try {
+        const errorData = JSON.parse(responseText);
+        if (errorData?.message) {
+          errorMsg = errorData.message;
+        } else if (errorData?.errors?.[0]?.msg) {
+          errorMsg = errorData.errors[0].msg;
+        }
+        if (errorData?.name) errorCode = errorData.name;
+      } catch {
+        if (responseText.trim()) errorMsg = responseText.trim();
+      }
+
+      if (errorCode === 'Unauthorized') {
+        errorMsg = 'You are not authorized to delete this media';
+      } else if (errorCode === 'MediaNotFound') {
+        errorMsg = 'Media not found - it may have been deleted already';
+      } else if (errorCode === 'InvalidId') {
+        errorMsg = 'Invalid media ID';
+      }
+      const error = new Error(errorMsg);
+      error.code = errorCode;
+      throw error;
+    }
+    const result = JSON.parse(responseText);
+    console.log('✅ Media deleted:', result);
+    return result; 
+  };
+
+  const modifyMedia = async (mediaId, updates, token) => {
+    if (!mediaId || typeof mediaId !== 'number' || mediaId < 1) {
+      throw new Error('Valid media ID is required');
+    }
+    if (!token || typeof token !== 'string') {
+      throw new Error('Authentication token is required');
+    }
+    const url = `${import.meta.env.VITE_MEDIA_API}/media/${mediaId}`;
+    const payload = {};
+    if (updates.title !== undefined) {
+      if (typeof updates.title !== 'string' || updates.title.length < 3 || updates.title.length > 128) {
+        throw new Error('Title must be between 3 and 128 characters');
+      }
+      payload.title = updates.title;
+    }
+    if (updates.description !== undefined) {
+      if (typeof updates.description !== 'string' || updates.description.length > 1000) {
+        throw new Error('Description must be max 1000 characters');
+      }
+      payload.description = updates.description;
+    }
+    // Ensure I have something to update
+    if (Object.keys(payload).length === 0) {
+      throw new Error('No valid fields to update');
+    }
+    
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token.trim()}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    const responseText = await response.text();
+    if (!response.ok) {
+      console.error('Modify API error:', {
+        status: response.status,
+        body: responseText,
+      });
+      let errorMsg = `Failed to update media: ${response.status}`;
+      let errorCode = null;
+      try {
+        const errorData = JSON.parse(responseText);
+        if (errorData?.message) {
+          errorMsg = errorData.message;
+        } else if (errorData?.errors?.[0]?.msg) {
+          // ValidationError returns array of errors
+          errorMsg = errorData.errors.map(e => e.msg).join(', ');
+        }
+        if (errorData?.name) errorCode = errorData.name;
+      } catch {
+        if (responseText.trim()) errorMsg = responseText.trim();
+      }
+      if (errorCode === 'Unauthorized') {
+        errorMsg = 'You are not authorized to update this media';
+      } else if (errorCode === 'MediaNotFound') {
+        errorMsg = 'Media not found';
+      } else if (errorCode === 'ValidationError') {
+        errorMsg = `Validation failed: ${errorMsg}`;
+      }
+      const error = new Error(errorMsg);
+      error.code = errorCode;
+      error.errors = errorData?.errors;
+      throw error;
+    }
+    const result = JSON.parse(responseText);
+    console.log('Media updated:', result);
+    return result;
+  };
+
   // fetch on mount
   useEffect(() => {
     fetchMedia();
@@ -91,6 +217,75 @@ export const useMedia = () => {
     error,
     refetch: fetchMedia, // allow manual refresh
     postMedia,
+    deleteMedia,
+    modifyMedia,
+  };
+};
+
+export const useLike = () => {
+  const baseUrl = `${import.meta.env.VITE_MEDIA_API}/likes`;
+  const getLikeCountByMediaId = async (mediaId) => {
+    const response = await fetch(`${baseUrl}/count/${mediaId}`);
+    const text = await response.text();
+    
+    if (!response.ok) {
+      throw new Error(`Failed to get like count: ${response.status}`);
+    }
+    
+    return JSON.parse(text);
+  };
+  
+  const getLikeByUser = async (mediaId, token) => {
+    const response = await fetch(`${baseUrl}/bymedia/user/${mediaId}`, {
+      headers: {
+        'Authorization': `Bearer ${token?.trim()}`,
+      },
+    });
+    const text = await response.text();
+    if (!response.ok) {
+      const errorData = JSON.parse(text);
+      throw new Error(errorData?.message || `Failed to check like: ${response.status}`);
+    }
+    return JSON.parse(text);
+  };
+  
+  const postLike = async (mediaId, token) => {
+    const response = await fetch(baseUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token?.trim()}`,
+      },
+      body: JSON.stringify({ media_id: mediaId }),
+    });
+    const text = await response.text();
+    if (!response.ok) {
+      const errorData = JSON.parse(text);
+      throw new Error(errorData?.message || `Failed to like: ${response.status}`);
+    }
+    return JSON.parse(text);
+  };
+  
+  const deleteLike = async (likeId, token) => {
+    const response = await fetch(`${baseUrl}/${likeId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token?.trim()}`,
+      },
+    });
+    const text = await response.text();
+    if (!response.ok) {
+      const errorData = JSON.parse(text);
+      throw new Error(errorData?.message || `Failed to unlike: ${response.status}`);
+    }
+    return JSON.parse(text);
+  };
+  
+  return {
+    getLikeCountByMediaId,
+    getLikeByUser,
+    postLike,
+    deleteLike,
   };
 };
 

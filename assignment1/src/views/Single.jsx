@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
-
+import Likes from '../components/Likes';
 const Single = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
@@ -26,7 +26,10 @@ const Single = () => {
         Back
       </button>
       
-      <h2>{item.title}</h2>
+      <h2 className="text-2xl font-bold mb-2">{item.title}</h2>
+      <div className="mb-4">
+        <Likes mediaId={item.media_id} />
+      </div>
       <p className="owner">
         <strong>Owner:</strong> {item.username || 'Unknown'} (ID: {item.user_id})
       </p>

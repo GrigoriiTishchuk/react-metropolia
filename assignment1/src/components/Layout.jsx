@@ -14,26 +14,56 @@ const Layout = () => {
   return (
     <div className="app-layout">
       <header className="app-header">
-        <nav>
-          <ul className="nav-list">
-            <li><Link to="/" className="nav-link">Home</Link></li>
-            
-            {/* Conditional rendering based on auth state */}
-            {user ? (
-              <>
-                <li><Link to="/profile" className="nav-link">{user.username}</Link></li>
-                <li><Link to="/upload" className="nav-link">Upload</Link></li>
-                <li>
-                  <button onClick={handleLogoutClick} className="nav-link logout-btn">
-                    Logout
-                  </button>
-                </li>
-              </>
-            ) : (
-              <li><Link to="/login" className="nav-link">Login</Link></li>
-            )}
-          </ul>
-        </nav>
+        <nav className="bg-gray-800 px-4 py-3">
+        <ul className="flex gap-6 list-none m-0 p-0">
+          <li>
+            <Link 
+              to="/" 
+              className="text-white font-medium px-3 py-2 rounded hover:bg-gray-700 transition-colors"
+            >
+              Home
+            </Link>
+          </li>
+          
+          {user ? (
+            <>
+              <li>
+                <Link 
+                  to="/profile" 
+                  className="text-white font-medium px-3 py-2 rounded hover:bg-gray-700 transition-colors"
+                >
+                  {user.username}
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/upload" 
+                  className="text-white font-medium px-3 py-2 rounded hover:bg-gray-700 transition-colors"
+                >
+                  Upload
+                </Link>
+              </li>
+              <li>
+                <button 
+                  onClick={handleLogoutClick}
+                  className="text-red-400 font-medium px-3 py-2 rounded hover:bg-gray-700 hover:text-red-300 transition-colors bg-transparent border-none cursor-pointer"
+                >
+                  Logout
+                </button>
+              </li>
+            </>
+          ) : (
+            <li>
+              <Link 
+                to="/login" 
+                className="text-white font-medium px-3 py-2 rounded hover:bg-gray-700 transition-colors"
+              >
+                Login
+              </Link>
+            </li>
+          )}
+        </ul>
+      </nav>
         {loading && <div className="auth-loading">Loading...</div>}
       </header>
       
